@@ -28,28 +28,32 @@
 
 	// Generate Image Derivatives
 	foreach ($entries as $entry){
-		echo "Resizing ".$entry."\n";
-	
-		$im = new imagick("images/".$entry);
-		$im->setImageFormat('jpeg');
-		$im->scaleImage(2000, 0);
-		$im->writeImage("convert/".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->scaleImage(1175, 0);
-		$im->writeImage("convert/xlrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->scaleImage(705, 0);
-		$im->writeImage("convert/lrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->scaleImage(705, 0);
-		$im->writeImage("convert/lrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->scaleImage(575, 0);
-		$im->writeImage("convert/med_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->cropThumbnailImage(400,250);
-		$im->writeImage("convert/sml_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->cropThumbnailImage(250,230);
-		$im->writeImage("convert/sqr_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->cropThumbnailImage(175,120);
-		$im->writeImage("convert/thumb_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
-		$im->clear();
-		$im->destroy();		
+		
+		if (strtolower(pathinfo($entry, PATHINFO_EXTENSION)) == "jpg"){
+			echo "Resizing ".$entry."\n";
+			$im = new imagick("images/".$entry);
+			$im->setImageFormat('jpeg');
+			$im->scaleImage(2000, 0);
+			$im->writeImage("convert/".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->scaleImage(1175, 0);
+			$im->writeImage("convert/xlrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->scaleImage(705, 0);
+			$im->writeImage("convert/lrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->scaleImage(705, 0);
+			$im->writeImage("convert/lrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->scaleImage(575, 0);
+			$im->writeImage("convert/med_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->cropThumbnailImage(400,250);
+			$im->writeImage("convert/sml_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->cropThumbnailImage(250,230);
+			$im->writeImage("convert/sqr_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->cropThumbnailImage(175,120);
+			$im->writeImage("convert/thumb_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+			$im->clear();
+			$im->destroy();
+		} else {
+			echo "Skipping ".$entry."\n";
+		}
 		
 	}
 

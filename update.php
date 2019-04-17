@@ -2,7 +2,7 @@
 	// Enable error reporting
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
-	include('config.inc');
+	require('config.inc');
 	
 	// Setup S3 access	
 	require('S3.php');
@@ -26,16 +26,58 @@
 		$entries[] = $fileInfo->getFilename();
 	}
 
+	// Generate Image Derivatives
+	foreach ($entries as $entry){
+		echo "Resizing ".$entry."\n";
+	
+		$im = new imagick("images/".$entry);
+		$im->setImageFormat('jpeg');
+		$im->scaleImage(2000, 0);
+		$im->writeImage("convert/".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->scaleImage(1175, 0);
+		$im->writeImage("convert/xlrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->scaleImage(705, 0);
+		$im->writeImage("convert/lrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->scaleImage(705, 0);
+		$im->writeImage("convert/lrg_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->scaleImage(575, 0);
+		$im->writeImage("convert/med_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->cropThumbnailImage(400,250);
+		$im->writeImage("convert/sml_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->cropThumbnailImage(250,230);
+		$im->writeImage("convert/sqr_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->cropThumbnailImage(175,120);
+		$im->writeImage("convert/thumb_".pathinfo($entry, PATHINFO_FILENAME).".jpg");
+		$im->clear();
+		$im->destroy();		
+		
+	}
+
+	// Upload Images to S3
+	$fileSystemIterator = new FilesystemIterator('convert');
+	$images = array();
+	foreach ($fileSystemIterator as $fileInfo){
+		$images[] = $fileInfo->getFilename();
+	}
+	foreach ($images as $image){
+		echo "Uploading ".$image."\n";
+		$local_image = file_get_contents($image);
+		S3::putObject($local_image,'mtv-collectionsonline',"archeology/".$image,S3::ACL_PUBLIC_READ,array(),array(),S3::STORAGE_CLASS_RRS);
+	}	
+	
+
+
+
 	// Loop through array of images
 	foreach ($entries as $entry){
 		echo $entry."\n";
 		$object_no = get_string_between($entry, 'DAACS_', '_Img');
 		echo $object_no."\n";
 	}
+
+
 	
 	
 	// Upload to S3
-	//$local_image = file_get_contents("images/762_40_47_DAACS_1722817_Img0206.jpg");
-	//S3::putObject($local_image,'mtv-collectionsonline',"archeology/762_40_47_DAACS_1722817_Img0206.jpg",S3::ACL_PUBLIC_READ,array(),array(),S3::STORAGE_CLASS_RRS);
 
 ?>

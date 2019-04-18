@@ -3,6 +3,15 @@
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
 	require('config.inc');
+
+	// Connect to DB
+	$conn = new mysqli($db_host, $db_user, $db_pass, $db);
+
+	// Check connection
+	if ($conn->connect_error) {
+		die("Connection failed: " . $conn->connect_error);
+	}
+
 	
 	// Setup S3 access	
 	require('S3.php');
@@ -65,23 +74,46 @@
 	}
 	foreach ($images as $image){
 		echo "Uploading ".$image."\n";
-		$local_image = file_get_contents($image);
+		$local_image = file_get_contents("convert/".$image);
 		S3::putObject($local_image,'mtv-collectionsonline',"archeology/".$image,S3::ACL_PUBLIC_READ,array(),array(),S3::STORAGE_CLASS_RRS);
 	}	
 	
 
-
+	$prev_obj = array();
 
 	// Loop through array of images
 	foreach ($entries as $entry){
-		echo $entry."\n";
-		$object_no = get_string_between($entry, 'DAACS_', '_Img');
-		echo $object_no."\n";
+		if (strtolower(pathinfo($entry, PATHINFO_EXTENSION)) == "jpg"){
+			echo $entry."\n";
+			$object_no = get_string_between($entry, 'DAACS_', '_Img');
+			echo $object_no."\n";
+
+			// Check image dimensions
+			list($width, $height) = getimagesize("convert/".$entry);
+			if ($width > $height) {
+			    $wide = "on";
+			} else {
+			    $wide = "";
+			}
+			
+			// Check if it's the first image for this object
+			if (in_array($object_no, $prev_obj)) {
+				$is_primary = 0;
+			} else {
+				$is_primary = 1;
+			}	
+
+			// Write the media to BigTree Media table
+			$sql = "INSERT INTO mv_archeology_media  (mediaid, object, media, image, wide, prim) VALUES  ('".pathinfo($entry, PATHINFO_FILENAME)."','".trim($object_no)."','".$entry."','//mtv-collectionsonline.mountvernon.org/archeology/".$entry."','".$wide."',".$is_primary.")";
+			if ($conn->query($sql) === TRUE) {
+			    echo "Added! \n";
+			} else {
+			    echo "Error: " . $sql . "<br>" . $conn->error;
+			}
+			array_push($prev_obj, $object_no);
+
+		}
 	}
 
-
-	
-	
-	// Upload to S3
 
 ?>
